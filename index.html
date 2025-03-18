@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Calculadora de interés compuesto para visualizar ganancias diarias en Bitcoin, XRP y Ethereum. Aprende a invertir inteligentemente con Marcos & Liam.">
+    <meta name="author" content="Marcos & Liam">
+    <title>Calculadora Interés Compuesto | Bitcoin Visual by Marcos & Liam</title>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'G-XXXXXXXXXX');
+    </script>
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Arial', sans-serif;
+            overflow-x: hidden;
+            background-color: #000;
+            color: #fff;
+        }
+        canvas#candles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: -1;
+            width: 100%;
+            height: 100%;
+        }
+        .container {
+            max-width: 700px;
+            background: rgba(0, 0, 0, 0.85);
+            padding: 25px;
+            margin: 60px auto;
+            border-radius: 20px;
+            box-shadow: 0 0 40px rgba(255, 215, 0, 0.4);
+            animation: fadeIn 1.5s ease;
+        }
+        @keyframes fadeIn {
+            from {opacity: 0; transform: translateY(-30px);}
+            to {opacity: 1; transform: translateY(0);}
+        }
+        input, button, select {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border-radius: 8px;
+            border: none;
+            font-size: 1rem;
+        }
+        input { border: 1px solid #ccc; }
+        button {
+            background-color: #ff9800;
+            color: white;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.3s;
+        }
+        button:hover { background-color: #e68a00; }
+
+        button.limpiar {
+            background-color: #d4af37;
+            color: #fff;
+            cursor: pointer;
+            font-weight: bold;
+            box-shadow: 0 0 15px rgba(212, 175, 55, 0.4);
+            transition: all 0.3s ease;
+        }
+        button.limpiar:hover {
+            background-color: #bfa133;
+            box-shadow: 0 0 25px rgba(212, 175, 55, 0.7);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 25px;
+            background: rgba(255, 255, 255, 0.95);
+            color: #000;
+            border-radius: 10px;
+            overflow: hidden;
+            font-size: 0.9rem;
+        }
+        th, td { padding: 8px; border: 1px solid #ddd; text-align: center; }
+        th { background-color: #ff9800; color: #fff; }
+        .result-summary {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 15px;
+            border-radius: 12px;
+            margin-top: 20px;
+            text-align: center;
+            font-size: 1.2rem;
+            transition: opacity 0.5s;
+        }
+        footer {
+            text-align: center;
+            margin-top: 30px;
+            font-weight: bold;
+            color: #fff;
+        }
+        .scroll-table {
+            overflow-x: auto;
+            transition: opacity 0.5s;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="candles"></canvas>
+    <div class="container">
+        <h2>Calculadora de Interés Compuesto con visual Bitcoin, XRP y Ethereum 🚀</h2>
+        <label>Monto inicial (USD):</label>
+        <input type="number" id="initialAmount" value="1000">
+
+        <label>Interés diario (%):</label>
+        <input type="number" id="dailyInterest" value="3">
+
+        <label>Cantidad de días:</label>
+        <input type="number" id="days" value="20">
+
+        <label>Moneda de visualización:</label>
+        <select id="currency">
+            <option value="USD" selected>USD</option>
+            <option value="EUR">EUR</option>
+            <option value="MXN">MXN</option>
+        </select>
+
+        <button onclick="calculateInterest()">Calcular</button>
+        <button class="limpiar" onclick="clearFields()">Limpiar</button>
+
+        <div class="result-summary" id="result"></div>
+
+        <div class="scroll-table">
+            <table id="interestTable"></table>
+        </div>
+
+        <p style="text-align: center; margin-top: 20px; font-style: italic;">⚠️ La rentabilidad puede variar según condiciones del mercado. Invierta con responsabilidad.</p>
+    </div>
+
+    <footer>Creado por Marcos & Liam | ¡Invierte inteligente y aprende! 💸</footer>
+
+    <audio id="cashSound" src="https://www.soundjay.com/misc/cash-register-01a.mp3"></audio>
+
+    <script>
+        function formatMoney(value, currency) {
+            return new Intl.NumberFormat('es-MX', { style: 'currency', currency: currency }).format(value);
+        }
+
+        function calculateInterest() {
+            document.getElementById('cashSound').play();
+
+            let initialAmount = parseFloat(document.getElementById('initialAmount').value);
+            let dailyInterest = parseFloat(document.getElementById('dailyInterest').value) / 100;
+            let days = parseInt(document.getElementById('days').value);
+            let currency = document.getElementById('currency').value;
+
+            if (initialAmount <= 0 || dailyInterest <= 0 || days <= 0) {
+                alert('Por favor ingresa valores válidos y mayores a cero.');
+                return;
+            }
+
+            let total = initialAmount;
+            let interestTotal = 0;
+            let tableHTML = '<tr><th>Día</th><th>Monto inicial</th><th>Interés ganado</th><th>Total acumulado</th><th>Interés total</th><th>Retorno (%)</th></tr>';
+
+            for (let i = 1; i <= days; i++) {
+                let interest = total * dailyInterest;
+                total += interest;
+                interestTotal += interest;
+                let retorno = ((total - initialAmount) / initialAmount) * 100;
+
+                tableHTML += `<tr>
+                    <td>${i}</td>
+                    <td>${formatMoney(total - interest, currency)}</td>
+                    <td>${formatMoney(interest, currency)}</td>
+                    <td>${formatMoney(total, currency)}</td>
+                    <td>${formatMoney(interestTotal, currency)}</td>
+                    <td>${retorno.toFixed(2)}%</td>
+                </tr>`;
+            }
+
+            document.getElementById('result').innerHTML = `
+                Total después de ${days} días: <strong>${formatMoney(total, currency)}</strong><br>
+                Interés total ganado: <strong>${formatMoney(interestTotal, currency)}</strong><br>
+                Retorno porcentual: <strong>${((total - initialAmount) / initialAmount * 100).toFixed(2)}%</strong>
+            `;
+            document.getElementById('interestTable').innerHTML = tableHTML;
+        }
+
+        function clearFields() {
+            const resultDiv = document.getElementById('result');
+            const table = document.getElementById('interestTable');
+
+            resultDiv.style.opacity = 1;
+            table.style.opacity = 1;
+
+            resultDiv.style.transition = 'opacity 0.5s';
+            table.style.transition = 'opacity 0.5s';
+
+            resultDiv.style.opacity = 0;
+            table.style.opacity = 0;
+
+            setTimeout(() => {
+                document.getElementById('initialAmount').value = '';
+                document.getElementById('dailyInterest').value = '';
+                document.getElementById('days').value = '';
+                document.getElementById('currency').value = 'USD';
+                resultDiv.innerHTML = '';
+                table.innerHTML = '';
+                resultDiv.style.opacity = 1;
+                table.style.opacity = 1;
+            }, 500);
+        }
+
+        const canvas = document.getElementById('candles');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        const logos = [
+            'https://cryptologos.cc/logos/bitcoin-btc-logo.png?v=025',
+            'https://cryptologos.cc/logos/xrp-xrp-logo.png?v=025',
+            'https://cryptologos.cc/logos/ethereum-eth-logo.png?v=025'
+        ];
+
+        const imgElements = logos.map(src => {
+            const img = new Image();
+            img.src = src;
+            return img;
+        });
+
+        let fallingLogos = [];
+
+        function createLogo() {
+            const img = imgElements[Math.floor(Math.random() * imgElements.length)];
+            fallingLogos.push({
+                x: Math.random() * canvas.width,
+                y: -100,
+                size: Math.random() * 40 + 40,
+                speed: Math.random() * 2 + 1,
+                rotation: Math.random() * Math.PI * 2,
+                rotationSpeed: Math.random() * 0.05 - 0.025,
+                img
+            });
+        }
+
+        function drawLogos() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            fallingLogos.forEach(logo => {
+                ctx.save();
+                ctx.translate(logo.x + logo.size / 2, logo.y + logo.size / 2);
+                ctx.rotate(logo.rotation);
+                ctx.globalAlpha = 0.9;
+                ctx.drawImage(logo.img, -logo.size / 2, -logo.size / 2, logo.size, logo.size);
+                ctx.restore();
+
+                logo.y += logo.speed;
+                logo.rotation += logo.rotationSpeed;
+
+                if (logo.y > canvas.height) {
+                    logo.y = -logo.size;
+                    logo.x = Math.random() * canvas.width;
+                    logo.rotation = Math.random() * Math.PI * 2;
+                }
+            });
+            requestAnimationFrame(drawLogos);
+        }
+
+        setInterval(createLogo, 500);
+        drawLogos();
+
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+    </script>
+</body>
+</html>
